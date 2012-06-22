@@ -761,6 +761,7 @@ late_initcall(msm_mpdecision_init);
 #include <linux/delay.h>
 
 #define MPDEC_TAG "[MPDEC]: "
+#define MSM_MPDEC_STARTDELAY 40000
 #define MSM_MPDEC_DELAY 500
 #define MSM_MPDEC_CPU_UPDELAY 200
 #define MSM_MPDEC_CPU_DOWNDELAY 200
@@ -803,6 +804,9 @@ static int mp_decision(void)
 	cputime64_t this_time = 0;
 
 	current_time = ktime_to_ms(ktime_get());
+	if (current_time <= MSM_MPDEC_STARTDELAY)
+		return MSM_MPDEC_IDLE;
+
 	if (first_call) {
 		first_call = false;
 	} else {

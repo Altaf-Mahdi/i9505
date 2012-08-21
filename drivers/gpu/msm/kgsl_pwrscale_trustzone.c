@@ -231,6 +231,7 @@ static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale)
 		priv->no_switch_cnt = 0;
 	}
 
+
 	/* If there is an extended block of busy processing,
 	 * increase frequency.  Otherwise run the normal algorithm.
 	 */
@@ -241,6 +242,8 @@ static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale)
 		idle = (idle > 0) ? idle : 0;
 		val = __secure_tz_entry(TZ_UPDATE_ID, idle, device->id);
 	}
+
+	idle = priv->bin.total_time - priv->bin.busy_time;
 	priv->bin.total_time = 0;
 	priv->bin.busy_time = 0;
 	idle = (idle > 0) ? idle : 0;

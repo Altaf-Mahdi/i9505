@@ -1782,9 +1782,12 @@ endif # CPU_FREQ_MSM
 
 config CMDLINE_OPTIONS
 	bool "Enable cmdline s2w/khz/gov/maxscroff/scheduler command parsing"
+
+config LOW_CPUCLOCKS
+	bool "Enable ultra low CPU clocks"
 	default n
 	help
-	  This enables the parsing of special cmdline variables.
+	  Ultra low cpu frequencies enabled for CPU and L2 Cache
 
 config CPU_VOLTAGE_TABLE
 	bool "Enable CPU Voltage Table via sysfs for adjustements"

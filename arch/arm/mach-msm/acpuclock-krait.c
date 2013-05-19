@@ -43,11 +43,7 @@
 #include <mach/sec_debug.h>
 #endif
 
-#ifdef CONFIG_CPU_OVERCLOCK
-#define OVERCLOCK_EXTRA_FREQS	7
-#else
-#define OVERCLOCK_EXTRA_FREQS	0
-#endif
+#include "krait-defines.h"
 
 /* MUX source selects. */
 #define PRI_SRC_SEL_SEC_SRC	0

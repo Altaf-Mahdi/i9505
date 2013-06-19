@@ -1783,6 +1783,12 @@ endif # CPU_FREQ_MSM
 config CMDLINE_OPTIONS
 	bool "Enable cmdline s2w/khz/gov/maxscroff/scheduler command parsing"
 
+config GPU_OVERCLOCK
+	bool "Enable GPU Overclocking option"
+	default n
+	help
+	  Kraint 600 ab GPU overclock up to 600 MHz
+
 config CPU_OVERCLOCK
 	bool "Enable CPU Overclocking option"
 	default n

@@ -62,6 +62,7 @@
 DEFINE_PER_CPU(struct hrtimer_cpu_base, hrtimer_bases) =
 {
 
+	.lock = __RAW_SPIN_LOCK_UNLOCKED(hrtimer_bases.lock),
 	.clock_base =
 	{
 		{
@@ -84,8 +85,6 @@ DEFINE_PER_CPU(struct hrtimer_cpu_base, hrtimer_bases) =
 		},
 	}
 };
-
-static DEFINE_PER_CPU(int, hrtimer_base_lock_init) = {-1};
 
 static const int hrtimer_clock_to_base_table[MAX_CLOCKS] = {
 	[CLOCK_REALTIME]	= HRTIMER_BASE_REALTIME,
@@ -299,6 +298,10 @@ ktime_t ktime_sub_ns(const ktime_t kt, u64 nsec)
 		tmp.tv64 = nsec;
 	} else {
 		unsigned long rem = do_div(nsec, NSEC_PER_SEC);
+
+		/* Make sure nsec fits into long */
+		if (unlikely(nsec > KTIME_SEC_MAX))
+			return (ktime_t){ .tv64 = KTIME_MAX };
 
 		tmp = ktime_set((long)nsec, rem);
 	}
@@ -1312,6 +1315,8 @@ retry:
 
 				expires = ktime_sub(hrtimer_get_expires(timer),
 						    base->offset);
+				if (expires.tv64 < 0)
+					expires.tv64 = KTIME_MAX;
 				if (expires.tv64 < expires_next.tv64)
 					expires_next = expires;
 				break;
@@ -1643,14 +1648,7 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
 static void __cpuinit init_hrtimers_cpu(int cpu)
 {
 	struct hrtimer_cpu_base *cpu_base = &per_cpu(hrtimer_bases, cpu);
-	int *lock_init = &per_cpu(hrtimer_base_lock_init, cpu);
 	int i;
-
-	if ((*lock_init) != cpu) {
-		*lock_init = cpu;
-		raw_spin_lock_init(&cpu_base->lock);
-		pr_info("hrtimer base lock initialized for cpu%d\n", cpu);
-	}
 
 	for (i = 0; i < HRTIMER_MAX_CLOCK_BASES; i++) {
 		cpu_base->clock_base[i].cpu_base = cpu_base;

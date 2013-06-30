@@ -148,34 +148,26 @@ static void tz_wake(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale)
 }
 
 #ifdef CONFIG_MSM_KGSL_SIMPLE_GOV
-#define HISTORY_SIZE 10
+static int default_laziness = 5;
+module_param_named(simple_laziness, default_laziness, int, 0664);
 
-static int ramp_up_threshold = 5500;
+static int ramp_up_threshold = 6000;
 module_param_named(simple_ramp_threshold, ramp_up_threshold, int, 0664);
 
-static unsigned int history[HISTORY_SIZE] = {0};
-static unsigned int counter = 0;
+static int laziness;
 
 static int simple_governor(struct kgsl_device *device, int idle_stat)
 {
 	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
-	int i;
-	unsigned int total = 0;
-
-	history[counter] = idle_stat;
-
-	for (i = 0; i < HISTORY_SIZE; i++)
-		total += history[i];
-
-	total = total/HISTORY_SIZE;
-
-	if (++counter == 10)
-		counter = 0;
 
 	/* it's currently busy */
-	if (total < ramp_up_threshold) 
+	if (idle_stat < ramp_up_threshold) 
 	{
-		if ((pwr->active_pwrlevel > 0) &&
+		if (pwr->active_pwrlevel == 0)
+			/* already maxed, so do nothing */
+			return 0; 
+		
+		else if ((pwr->active_pwrlevel > 0) &&
 			(pwr->active_pwrlevel <= (pwr->num_pwrlevels - 1)))
 			/* bump up to next pwrlevel */
 			return -1; 
@@ -185,7 +177,20 @@ static int simple_governor(struct kgsl_device *device, int idle_stat)
 	{
 		if ((pwr->active_pwrlevel >= 0) &&
 			(pwr->active_pwrlevel < (pwr->num_pwrlevels - 1)))
-			return 1; 	 
+			if (likely(--laziness > 0)) 
+			{
+				/* don't change anything yet hold off for a while */
+				return 0;
+			} 
+			else 
+			{
+				/* above min, lower it */	
+				laziness = default_laziness;
+				return 1; 	
+			}
+		else if (pwr->active_pwrlevel == (pwr->num_pwrlevels - 1))
+			/* already @ min, so do nothing */
+			return 0; 
 	}
 
 	return 0;

@@ -21,7 +21,7 @@
 #include <linux/delay.h>
 #include <linux/input.h>
 #include <linux/firmware.h>
-#include "synaptics_i2c_rmi.h"
+#include <linux/input/synaptics_i2c_rmi.h>
 #include <linux/regulator/consumer.h>
 
 #define F01_DEVICE_STATUS	0X0004

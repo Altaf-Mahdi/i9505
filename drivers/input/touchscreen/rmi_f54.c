@@ -24,7 +24,7 @@
 #include <linux/hrtimer.h>
 #include <linux/firmware.h>
 
-#include "synaptics_i2c_rmi.h"
+#include <linux/input/synaptics_i2c_rmi.h>
 
 #define FACTORY_MODE
 

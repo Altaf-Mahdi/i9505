@@ -23,7 +23,7 @@
 #include <linux/gpio.h>
 #include <linux/uaccess.h>
 #include <linux/cdev.h>
-#include "synaptics_i2c_rmi.h"
+#include <linux/input/synaptics_i2c_rmi.h>
 
 #define CHAR_DEVICE_NAME "rmi"
 #define DEVICE_CLASS_NAME "rmidev"

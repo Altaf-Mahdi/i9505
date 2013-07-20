@@ -26,7 +26,8 @@
 #ifdef CONFIG_HAS_EARLYSUSPEND
 #include <linux/earlysuspend.h>
 #endif
-#include "synaptics_i2c_rmi.h"
+
+#include <linux/input/synaptics_i2c_rmi.h>
 
 #define DRIVER_NAME "synaptics_rmi4_i2c"
 
@@ -131,7 +132,9 @@
 #define CHARGER_CONNECTED (1 << 5)
 #define CHARGER_DISCONNECTED	0xDF
 #define CONFIGURED (1 << 7)
-
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+#include <linux/input/sweep2wake.h>
+#endif
 static int synaptics_rmi4_i2c_read(struct synaptics_rmi4_data *rmi4_data,
 		unsigned short addr, unsigned char *data,
 		unsigned short length);
@@ -576,6 +579,30 @@ static struct device_attribute attrs[] = {
 			synaptics_rmi4_0dbutton_show,
 			synaptics_rmi4_0dbutton_store),
 };
+
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+bool is_single_touch(struct synaptics_rmi4_data *rmi4_data,
+			struct synaptics_rmi4_fn *fhandler) {
+	unsigned int finger = 0, finger_cnt = 1;
+	unsigned char fingers_supported;
+	unsigned char finger_status;
+	struct synaptics_rmi4_f12_finger_data *data;
+	struct synaptics_rmi4_f12_finger_data *finger_data;
+	fingers_supported = fhandler->num_of_data_points;
+	data = (struct synaptics_rmi4_f12_finger_data *)fhandler->data;
+
+	for (finger = 0; finger < fingers_supported; finger++) {
+		finger_data = data + finger;
+		finger_status = finger_data->object_type_and_status;
+		if (finger_status == 1)
+			finger_cnt++;
+	}
+	if (finger_cnt == 1)
+		return true;
+	else
+		return false;
+}
+#endif
 
 static struct list_head exp_fn_list;
 
@@ -1366,6 +1393,7 @@ static int synaptics_rmi4_f11_abs_report(struct synaptics_rmi4_data *rmi4_data,
 					__func__, finger,
 					finger_status,
 					x, y, wx, wy);
+			
 
 			touch_count++;
 		}
@@ -1463,6 +1491,7 @@ static int synaptics_rmi4_f12_abs_report(struct synaptics_rmi4_data *rmi4_data,
 			wx = finger_data->wx;
 			wy = finger_data->wy;
 #ifdef EDGE_SWIPE
+				
 			if (f51) {
 #if defined(CONFIG_MACH_JACTIVE_ATT)
 				if (f51->proximity_controls & HAS_EDGE_SWIPE) {
@@ -1518,7 +1547,15 @@ static int synaptics_rmi4_f12_abs_report(struct synaptics_rmi4_data *rmi4_data,
 				rmi4_data->finger[finger].mcount++;
 
 			touch_count++;
-		}
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+			detect_sweep2wake(x,y, rmi4_data, fhandler);
+#if 0
+	//this is debug information for finding sweeping data or screen coordinates
+			pr_err(	"[sweep2wake]: Finger %d,x = %d, y = %d, wx = %d, wy = %d\n", finger, x, y, wx, wy);
+#endif
+#endif
+
+			}
 
 		if (rmi4_data->finger[finger].state && !finger_status) {
 			dev_info(&rmi4_data->i2c_client->dev, "[%d][R] 0x%02x M[%d] V[%x]\n",
@@ -1531,7 +1568,6 @@ static int synaptics_rmi4_f12_abs_report(struct synaptics_rmi4_data *rmi4_data,
 		rmi4_data->finger[finger].state = finger_status;
 	}
 
-
 	if (touch_count == 0) {
 		/* Clear BTN_TOUCH when All touch are released  */
 		input_report_key(rmi4_data->input_dev,
@@ -1539,7 +1575,16 @@ static int synaptics_rmi4_f12_abs_report(struct synaptics_rmi4_data *rmi4_data,
 #ifndef TYPE_B_PROTOCOL
 		input_mt_sync(rmi4_data->input_dev);
 #endif
-	}
+	#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+  if (s2w_switch > 0) {
+//     pr_err("[sweep2wake]: reset exec count");
+    exec_count = true;
+    barrier[0] = false;
+    barrier[1] = false;
+    scr_on_touch = false;
+  }
+#endif
+}
 
 	input_sync(rmi4_data->input_dev);
 
@@ -1549,6 +1594,7 @@ static int synaptics_rmi4_f12_abs_report(struct synaptics_rmi4_data *rmi4_data,
 	else
 		synaptics_set_dvfs_lock(rmi4_data, 0);
 #endif
+		
 	return touch_count;
 }
 
@@ -3388,7 +3434,7 @@ int synaptics_rmi4_reset_device(struct synaptics_rmi4_data *rmi4_data)
 {
 	int retval;
 	unsigned char command = 0x01;
-
+	
 	mutex_lock(&(rmi4_data->rmi4_reset_mutex));
 
 	disable_irq(rmi4_data->i2c_client->irq);
@@ -4117,7 +4163,12 @@ static void synaptics_rmi4_early_suspend(struct early_suspend *h)
 	struct synaptics_rmi4_data *rmi4_data =
 			container_of(h, struct synaptics_rmi4_data,
 			early_suspend);
-
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+	scr_suspended = true;
+	
+	if (s2w_switch == 0)
+#endif
+{
 	if (rmi4_data->stay_awake) {
 		rmi4_data->staying_awake = true;
 		return;
@@ -4136,6 +4187,12 @@ static void synaptics_rmi4_early_suspend(struct early_suspend *h)
 		/* release all finger when entered suspend */
 		synaptics_rmi4_release_all_finger(rmi4_data);
 	}
+   }
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+   else {
+     enable_irq(rmi4_data->i2c_client->irq);
+   }
+#endif
 }
 
  /**
@@ -4153,7 +4210,12 @@ static void synaptics_rmi4_late_resume(struct early_suspend *h)
 			container_of(h, struct synaptics_rmi4_data,
 			early_suspend);
 	int retval;
-
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+	scr_suspended = false;
+	
+	if (s2w_switch == 0)
+#endif
+  {
 	if (rmi4_data->staying_awake)
 		return;
 
@@ -4193,6 +4255,12 @@ static void synaptics_rmi4_late_resume(struct early_suspend *h)
 		dev_err(&rmi4_data->i2c_client->dev,
 				"%s: touch_tout1_on failed\n", __func__);
 #endif
+  }
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+   else {
+     enable_irq(rmi4_data->i2c_client->irq);
+   }
+#endif
 	return;
 }
 #else
@@ -4228,10 +4296,12 @@ static int synaptics_rmi4_suspend(struct device *dev)
 			dev_err(&rmi4_data->i2c_client->dev, "%s already power off\n",
 				__func__);
 		}
-	}
+	    }
+
 	mutex_unlock(&rmi4_data->input_dev->mutex);
 
 	return 0;
+    
 }
 
  /**

@@ -25,7 +25,7 @@
 #include <linux/earlysuspend.h>
 #endif
 #include <linux/i2c/synaptics_rmi.h>
-#include "synaptics_i2c_rmi.h"
+#include <linux/input/synaptics_i2c_rmi.h>
 
 #define QUERY_BOOTLOADER_ID_OFFSET 0
 #define QUERY_BLOCK_SIZE_OFFSET 2

@@ -583,7 +583,7 @@ static struct device_attribute attrs[] = {
 #ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
 bool is_single_touch(struct synaptics_rmi4_data *rmi4_data,
 			struct synaptics_rmi4_fn *fhandler) {
-	unsigned int finger = 0, finger_cnt = 1;
+	unsigned int finger = 0, finger_cnt = 0;
 	unsigned char fingers_supported;
 	unsigned char finger_status;
 	struct synaptics_rmi4_f12_finger_data *data;
@@ -596,11 +596,10 @@ bool is_single_touch(struct synaptics_rmi4_data *rmi4_data,
 		finger_status = finger_data->object_type_and_status;
 		if (finger_status == 1)
 			finger_cnt++;
+		if (finger_cnt > 1)
+			return false;
 	}
-	if (finger_cnt == 1)
-		return true;
-	else
-		return false;
+	return true;
 }
 #endif
 

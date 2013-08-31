@@ -1896,8 +1896,7 @@ __acquires(&gcwq->lock)
 	trace_workqueue_execute_start(work);
 #ifdef CONFIG_SEC_DEBUG
 	secdbg_sched_msg("@%pS", f);
-#endif
-	f(work);
+#endif	
 	worker->current_func(work);
 
 	/*

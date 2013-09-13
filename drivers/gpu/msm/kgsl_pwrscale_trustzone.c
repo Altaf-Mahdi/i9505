@@ -28,7 +28,7 @@
 #define TZ_GOVERNOR_ONDEMAND    1
 #define TZ_GOVERNOR_INTERACTIVE	2
 
-#define DEBUG 0
+#define DEBUG 1
 
 struct tz_priv {
 	int governor;
@@ -74,8 +74,9 @@ static int __secure_tz_entry(u32 cmd, u32 val, u32 id)
 
 unsigned long window_time = 0;
 unsigned long sample_time_ms = 100;
-unsigned int up_threshold = 50;
+unsigned int up_threshold = 60;
 unsigned int down_threshold = 25;
+unsigned int up_differential = 10;
 
 module_param(sample_time_ms, long, 0664);
 module_param(up_threshold, int, 0664);
@@ -90,8 +91,8 @@ static ssize_t tz_governor_show(struct kgsl_device *device,
 
 	if (priv->governor == TZ_GOVERNOR_ONDEMAND)
 		ret = snprintf(buf, 10, "ondemand\n");
-    	else if (priv->governor == TZ_GOVERNOR_INTERACTIVE)
-		ret = snprintf(buf, 11, "interactive\n");
+    else if (priv->governor == TZ_GOVERNOR_INTERACTIVE)
+		ret = snprintf(buf, 13, "interactive\n");
 	else
 		ret = snprintf(buf, 13, "performance\n");
 
@@ -115,7 +116,7 @@ static ssize_t tz_governor_store(struct kgsl_device *device,
 
 	if (!strncmp(str, "ondemand", 8))
 		priv->governor = TZ_GOVERNOR_ONDEMAND;
-    	else if (!strncmp(str, "interactive", 11))
+    else if (!strncmp(str, "interactive", 11))
 		priv->governor = TZ_GOVERNOR_INTERACTIVE;
 	else if (!strncmp(str, "performance", 11))
 		priv->governor = TZ_GOVERNOR_PERFORMANCE;
@@ -150,6 +151,7 @@ static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale)
 	struct kgsl_power_stats stats;
 	unsigned long total_time_ms = 0;
 	unsigned long busy_time_ms = 0;
+	unsigned long threshold = 0;
 
 	/* In "performance" mode the clock speed always stays
 	   the same */
@@ -177,7 +179,26 @@ static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale)
 	pr_info("GPU frequency: %d\n", pwr->pwrlevels[pwr->active_pwrlevel].gpu_freq);
 #endif
 
-	if ((busy_time_ms * 100) > (total_time_ms * up_threshold))
+	/*
+	 * Scale the up_threshold value based on the active_pwrlevel. We have
+	 * 4 different levels:
+	 * 3 = 128MHz
+	 * 2 = 200MHz
+	 * 1 = 320MHz
+	 * 0 = 400MHz
+	 *
+	 * Making the up_threshold value lower if the active level is 2 or 3 will
+	 * possibly improve smoothness while scrolling or open applications with
+	 * a lot of images and what not. With a Full HD panel like Flo/Deb I could
+	 * notice a few frame drops while this algorithm didn't scale past 128MHz
+	 * on simple operations. This is fixed with up_threshold being scaled
+	 */
+	if (pwr->active_pwrlevel > 1)
+		threshold = (up_threshold / pwr->active_pwrlevel) + up_differential;
+	else
+		threshold = up_threshold - up_differential;
+
+	if ((busy_time_ms * 100) > (total_time_ms * threshold))
 	{
 		if ((pwr->active_pwrlevel > 0) &&
 			(pwr->active_pwrlevel <= (pwr->num_pwrlevels - 1)))

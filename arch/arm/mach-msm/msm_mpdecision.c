@@ -48,11 +48,11 @@
 #define MSM_MPDEC_PAUSE                 10000
 #define MSM_MPDEC_IDLE_FREQ             486000
 #ifdef CONFIG_MSM_MPDEC_INPUTBOOST_CPUMIN
-#define MSM_MPDEC_BOOSTTIME             1000
-#define MSM_MPDEC_BOOSTFREQ_CPU0        918000
-#define MSM_MPDEC_BOOSTFREQ_CPU1        918000
-#define MSM_MPDEC_BOOSTFREQ_CPU2        702000
-#define MSM_MPDEC_BOOSTFREQ_CPU3        594000
+#define MSM_MPDEC_BOOSTTIME             1200
+#define MSM_MPDEC_BOOSTFREQ_CPU0        1134000
+#define MSM_MPDEC_BOOSTFREQ_CPU1        1026000
+#define MSM_MPDEC_BOOSTFREQ_CPU2        918000
+#define MSM_MPDEC_BOOSTFREQ_CPU3        810000
 #endif
 
 enum {
@@ -125,7 +125,7 @@ static struct msm_mpdec_tuners {
 #endif
 };
 
-static unsigned int NwNs_Threshold[8] = {12, 0, 20, 7, 25, 10, 0, 18};
+static unsigned int NwNs_Threshold[8] = {10, 0, 18, 7, 23, 10, 0, 18};
 static unsigned int TwTs_Threshold[8] = {140, 0, 140, 190, 140, 190, 0, 190};
 
 extern unsigned int get_rq_info(void);

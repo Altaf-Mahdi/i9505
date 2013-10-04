@@ -28,7 +28,7 @@
 #define TZ_GOVERNOR_ONDEMAND    1
 #define TZ_GOVERNOR_INTERACTIVE	2
 
-#define DEBUG 1
+#define DEBUG 0
 
 struct tz_priv {
 	int governor;

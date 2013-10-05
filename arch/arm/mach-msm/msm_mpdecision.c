@@ -48,7 +48,7 @@
 #define MSM_MPDEC_PAUSE                 10000
 #define MSM_MPDEC_IDLE_FREQ             486000
 #ifdef CONFIG_MSM_MPDEC_INPUTBOOST_CPUMIN
-#define MSM_MPDEC_BOOSTTIME             1200
+#define MSM_MPDEC_BOOSTTIME             1300
 #define MSM_MPDEC_BOOSTFREQ_CPU0        1134000
 #define MSM_MPDEC_BOOSTFREQ_CPU1        1026000
 #define MSM_MPDEC_BOOSTFREQ_CPU2        918000
@@ -112,7 +112,7 @@ static struct msm_mpdec_tuners {
     .scroff_single_core = true,
     .idle_freq = MSM_MPDEC_IDLE_FREQ,
     .max_cpus = CONFIG_NR_CPUS,
-    .min_cpus = 1,
+    .min_cpus = 2,
 #ifdef CONFIG_MSM_MPDEC_INPUTBOOST_CPUMIN
     .boost_enabled = true,
     .boost_time = MSM_MPDEC_BOOSTTIME,
@@ -125,8 +125,8 @@ static struct msm_mpdec_tuners {
 #endif
 };
 
-static unsigned int NwNs_Threshold[8] = {10, 0, 18, 7, 23, 10, 0, 18};
-static unsigned int TwTs_Threshold[8] = {140, 0, 140, 190, 140, 190, 0, 190};
+static unsigned int NwNs_Threshold[8] = {14, 0, 22, 7, 27, 10, 0, 18};
+static unsigned int TwTs_Threshold[8] = {150, 0, 150, 190, 150, 190, 0, 190};
 
 extern unsigned int get_rq_info(void);
 extern unsigned long acpuclk_get_rate(int);

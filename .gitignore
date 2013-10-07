@@ -137,9 +137,9 @@ arch/arm/boot/compressed/piggy.xzkern
 *~
 \#*#
 Packages/
-build-mahdi-4.3.sh
-build-mahdi-exp-4.3.sh
 build-mahdi.sh
+build-mahdi-exp.sh
+build-mahdi-exp-linaro.sh
 loki_flash
 loki_patch-linux-x86_64
 mkbootfs

@@ -14,8 +14,7 @@
 #ifdef CONFIG_KEXEC_HARDBOOT
 #include <asm/kexec.h>
 #endif
-
-	.arch	armv7-a
+	
 /*
  * Debugging stuff
  *

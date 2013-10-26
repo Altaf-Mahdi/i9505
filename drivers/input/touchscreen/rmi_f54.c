@@ -26,9 +26,6 @@
 
 #include <linux/input/synaptics_i2c_rmi.h>
 
-static int panel_colors = 2;
-extern void panel_load_colors(unsigned int value);
-
 #define FACTORY_MODE
 
 #define CMD_REPORT_TYPE_DELTA	2

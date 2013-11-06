@@ -23,6 +23,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "msm_mpdecision.h"
 #ifdef CONFIG_FB
 #include <linux/lcd_notify.h>
 #elif defined CONFIG_HAS_EARLYSUSPEND
@@ -46,44 +47,8 @@
 
 #define DEBUG 0
 
-#define MPDEC_TAG                       "[MPDEC]: "
-#define MSM_MPDEC_STARTDELAY            20000
-#define MSM_MPDEC_DELAY                 130
-#define MSM_MPDEC_PAUSE                 10000
-#define MSM_MPDEC_IDLE_FREQ             486000
-#ifdef CONFIG_MSM_MPDEC_INPUTBOOST_CPUMIN
-#define MSM_MPDEC_BOOSTTIME             1300
-#define MSM_MPDEC_BOOSTFREQ_CPU0        1134000
-#define MSM_MPDEC_BOOSTFREQ_CPU1        1026000
-#define MSM_MPDEC_BOOSTFREQ_CPU2        918000
-#define MSM_MPDEC_BOOSTFREQ_CPU3        810000
-#endif
-
-enum {
-    MSM_MPDEC_DISABLED = 0,
-    MSM_MPDEC_IDLE,
-    MSM_MPDEC_DOWN,
-    MSM_MPDEC_UP,
-};
-
-struct msm_mpdec_cpudata_t {
-    struct mutex hotplug_mutex;
-    int online;
-    cputime64_t on_time;
-    cputime64_t on_time_total;
-    long long unsigned int times_cpu_hotplugged;
-    long long unsigned int times_cpu_unplugged;
-#ifdef CONFIG_MSM_MPDEC_INPUTBOOST_CPUMIN
-    struct mutex boost_mutex;
-    struct mutex unboost_mutex;
-    unsigned long int norm_min_freq;
-    unsigned long int boost_freq;
-    cputime64_t boost_until;
-    bool is_boosted;
-    bool revib_wq_running;
-#endif
-};
-static DEFINE_PER_CPU(struct msm_mpdec_cpudata_t, msm_mpdec_cpudata);
+DEFINE_PER_CPU(struct msm_mpdec_cpudata_t, msm_mpdec_cpudata);
+EXPORT_PER_CPU_SYMBOL_GPL(msm_mpdec_cpudata);
 
 static bool mpdec_suspended = false;
 static struct notifier_block msm_mpdec_lcd_notif;
@@ -118,7 +83,7 @@ static struct msm_mpdec_tuners {
     .scroff_single_core = true,
     .idle_freq = MSM_MPDEC_IDLE_FREQ,
     .max_cpus = CONFIG_NR_CPUS,
-    .min_cpus = 2,
+    .min_cpus = 1,
 #ifdef CONFIG_MSM_MPDEC_INPUTBOOST_CPUMIN
     .boost_enabled = true,
     .boost_time = MSM_MPDEC_BOOSTTIME,
@@ -131,8 +96,8 @@ static struct msm_mpdec_tuners {
 #endif
 };
 
-static unsigned int NwNs_Threshold[8] = {14, 0, 22, 7, 27, 10, 0, 18};
-static unsigned int TwTs_Threshold[8] = {150, 0, 150, 190, 150, 190, 0, 190};
+static unsigned int NwNs_Threshold[8] = {12, 0, 20, 7, 25, 10, 0, 18};
+static unsigned int TwTs_Threshold[8] = {140, 0, 140, 190, 140, 190, 0, 190};
 
 extern unsigned int get_rq_info(void);
 extern unsigned long acpuclk_get_rate(int);

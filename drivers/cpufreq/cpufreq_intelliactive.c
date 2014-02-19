@@ -133,7 +133,7 @@ static unsigned int up_threshold_any_cpu_load = 95;
 static unsigned int sync_freq = 702000;
 static unsigned int up_threshold_any_cpu_freq = 1026000;
 
-static int two_phase_freq_array[NR_CPUS] = {[0 ... NR_CPUS-1] = 1350000} ;
+static int two_phase_freq_array[NR_CPUS] = {[0 ... NR_CPUS-1] = 1566000} ;
 
 static int cpufreq_governor_intelliactive(struct cpufreq_policy *policy,
 		unsigned int event);

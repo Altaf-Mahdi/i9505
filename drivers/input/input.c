@@ -427,6 +427,7 @@ void input_event(struct input_dev *dev,
 	if (is_event_supported(type, dev->evbit, EV_MAX)) {
 
 		spin_lock_irqsave(&dev->event_lock, flags);
+		add_input_randomness(type, code, value);
 		input_handle_event(dev, type, code, value);
 		spin_unlock_irqrestore(&dev->event_lock, flags);
 	}
@@ -1653,7 +1654,7 @@ void input_reset_device(struct input_dev *dev)
 		 */
 		if (!poweroff_charging) {
 			spin_lock_irq(&dev->event_lock);
-#if !defined(CONFIG_MACH_JACTIVE_ATT)
+#if !defined(CONFIG_SEC_TORCH_FLASH)
 			input_dev_release_keys(dev);
 #endif
 			spin_unlock_irq(&dev->event_lock);

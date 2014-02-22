@@ -1,86 +1,41 @@
-/* Synaptics Register Mapped Interface (RMI4) I2C Physical Layer Driver.
- * Copyright (c) 2007-2012, Synaptics Incorporated
+/*
+ * Synaptics RMI4 touchscreen driver
  *
- * This software is licensed under the terms of the GNU General Public
- * License version 2, as published by the Free Software Foundation, and
- * may be copied, distributed, and modified under those terms.
+ * Copyright (C) 2012 Synaptics Incorporated
+ *
+ * Copyright (C) 2012 Alexandra Chin <alexandra.chin@tw.synaptics.com>
+ * Copyright (C) 2012 Scott Lin <scott.lin@tw.synaptics.com>
+ * Copyright (c) 2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
  */
-#ifndef _SYNAPTICS_RMI4_H_
-#define _SYNAPTICS_RMI4_H_
 
-#define SYNAPTICS_RMI4_DRIVER_VERSION "DS5 1.0"
-#include <linux/device.h>
-#include <linux/i2c/synaptics_rmi.h>
+#ifndef _SYNAPTICS_DSX_RMI4_H_
+#define _SYNAPTICS_DSX_RMI4_H_
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#define SYNAPTICS_DS4 (1 << 0)
+#define SYNAPTICS_DS5 (1 << 1)
+#define SYNAPTICS_DSX_DRIVER_PRODUCT SYNAPTICS_DS4
+#define SYNAPTICS_DSX_DRIVER_VERSION 0x1005
+
+#include <linux/version.h>
+
+#ifdef CONFIG_FB
+#include <linux/notifier.h>
+#include <linux/fb.h>
+#elif defined CONFIG_HAS_EARLYSUSPEND
 #include <linux/earlysuspend.h>
 #endif
 
-/*#define dev_dbg(dev, fmt, arg...) dev_info(dev, fmt, ##arg)*/
-
-/* DVFS feature : TOUCH BOOSTER */
-#ifdef CONFIG_SEC_DVFS_BOOSTER
-#define TSP_BOOSTER
-#endif
-#ifdef TSP_BOOSTER
-#define DVFS_STAGE_DUAL		2
-#define DVFS_STAGE_SINGLE	1
-#define DVFS_STAGE_NONE		0
-#include <linux/cpufreq.h>
-
-#define TOUCH_BOOSTER_OFF_TIME	2000
-#define TOUCH_BOOSTER_CHG_TIME	200
-#endif
-
-/* To support suface touch, firmware should support data
- * which is required related app ex) MT_ANGLE, MT_PALM ...
- * Synpatics IC report those data through F51's edge swipe
- * fucntionality.
- */
-#define SYNAPTICS_PRODUCT_ID_B0	"SY 01"
-#define SYNAPTICS_PRODUCT_ID_B0_SPAIR	"S5000B"
-
-#if defined(CONFIG_MACH_JACTIVE_EUR) || defined(CONFIG_MACH_JACTIVE_ATT)
-#define FW_IMAGE_NAME_B0_HSYNC		"tsp_synaptics/jactive/synaptics_b0_hsync.fw"
-#define FW_IMAGE_NAME_B0_HSYNC_FAC	"tsp_synaptics/jactive/synaptics_b0_hsync_fac.fw"
-#define FW_IMAGE_NAME_B0_HSYNC04	"tsp_synaptics/jactive/synaptics_b0_hsync04.fw"
-#define FW_IMAGE_NAME_B0_HSYNC04_FAC	"tsp_synaptics/jactive/synaptics_b0_hsync04_fac.fw"
-
-/* NON HYNC F/W will be removed */
-/* PRODUCT ID : SY 01, SY 02, S5000B */
-#define FW_IMAGE_NAME_B0_NON_HSYNC	"tsp_synaptics/jactive/synaptics_b0_non_hsync.fw"
-#define FW_IMAGE_NAME_B0_NON_HSYNC_FAC	"tsp_synaptics/jactive/synaptics_b0_non_hsync_fac.fw"
-
-#else
-#define FW_IMAGE_NAME_A1			"tsp_synaptics/synaptics_a1.fw"
-#define FW_IMAGE_NAME_B0_34			"tsp_synaptics/synaptics_b0_3_4.fw"
-#endif
-#define FW_IMAGE_NAME_B0_40			"tsp_synaptics/synaptics_b0_4_0.fw"
-#define FW_IMAGE_NAME_B0_43			"tsp_synaptics/synaptics_b0_4_3.fw"
-#define FW_IMAGE_NAME_B0_51			"tsp_synaptics/synaptics_b0_5_1.fw"
-#define FW_IMAGE_NAME_B0_FAC		"tsp_synaptics/synaptics_b0_fac.fw"
-#define FW_IMAGE_NAME_B0_5_1_FAC	"tsp_synaptics/synaptics_b0_5_1_fac.fw"
-#define SYNAPTICS_FW_UMS			"/sdcard/synaptics.fw"
-
-#if defined(CONFIG_MACH_JACTIVE_EUR) || defined(CONFIG_MACH_JACTIVE_ATT)
-#define FW_IMAGE_TEST	"tsp_synaptics/synaptics_d0.fw"
-#define SYNAPTICS_DEVICE_NAME		"GT-I9295"
-#else
-#define SYNAPTICS_DEVICE_NAME		"SGH-I337"
-#endif
-#define SYNAPTICS_MAX_FW_PATH	64
-
-#define DATE_OF_FIRMWARE_BIN_OFFSET	0xEF00
-#define IC_REVISION_BIN_OFFSET	0xEF02
-#define FW_VERSION_BIN_OFFSET	0xEF03
-
-#define PDT_PROPS (0X00EF)
+#define PDT_PROPS (0x00EF)
 #define PDT_START (0x00E9)
 #define PDT_END (0x000A)
 #define PDT_ENTRY_SIZE (0x0006)
@@ -89,21 +44,19 @@
 
 #define SYNAPTICS_RMI4_F01 (0x01)
 #define SYNAPTICS_RMI4_F11 (0x11)
-#define SYNAPTICS_RMI4_F12 (0x12)
 #define SYNAPTICS_RMI4_F1A (0x1a)
 #define SYNAPTICS_RMI4_F34 (0x34)
-#define SYNAPTICS_RMI4_F51 (0x51)
 #define SYNAPTICS_RMI4_F54 (0x54)
+#define SYNAPTICS_RMI4_F55 (0x55)
 
 #define SYNAPTICS_RMI4_PRODUCT_INFO_SIZE 2
 #define SYNAPTICS_RMI4_DATE_CODE_SIZE 3
 #define SYNAPTICS_RMI4_PRODUCT_ID_SIZE 10
 #define SYNAPTICS_RMI4_BUILD_ID_SIZE 3
-#define SYNAPTICS_RMI4_PRODUCT_ID_LENGTH 10
 
+#define MAX_NUMBER_OF_FINGERS 10
 #define MAX_NUMBER_OF_BUTTONS 4
 #define MAX_INTR_REGISTERS 4
-#define MAX_NUMBER_OF_FINGERS 10
 
 #define MASK_16BIT 0xFFFF
 #define MASK_8BIT 0xFF
@@ -199,30 +152,9 @@ struct synaptics_rmi4_device_info {
 	unsigned short serial_number;
 	unsigned char product_id_string[SYNAPTICS_RMI4_PRODUCT_ID_SIZE + 1];
 	unsigned char build_id[SYNAPTICS_RMI4_BUILD_ID_SIZE];
+	unsigned char config_id[3];
 	struct list_head support_fn_list;
 };
-
-/**
- * struct synaptics_finger - Represents fingers.
- * @ state: finger status.
- * @ mcount: moving counter for debug.
- */
-struct synaptics_finger {
-	unsigned char state;
-	unsigned short mcount;
-};
-
-#if defined(CONFIG_TOUCHSCREEN_FACTORY_PLATFORM)
-/*
- * struct synaptics_hover - Represents Hovering.
- * @ state: Hover status.
- * @ mcount: moving counter for debug.
- */
-struct synaptics_hover {
-	unsigned char state;
-	unsigned short mcount;
-};
-#endif
 
 /*
  * struct synaptics_rmi4_data - rmi4 device instance data
@@ -232,6 +164,8 @@ struct synaptics_hover {
  * @rmi4_mod_info: device information
  * @regulator: pointer to associated regulator
  * @rmi4_io_ctrl_mutex: mutex for i2c i/o control
+ * @det_work: work thread instance for expansion function detection
+ * @det_workqueue: pointer to work queue for work thread instance
  * @early_suspend: instance to support early suspend power management
  * @current_page: current page in sensor to acess
  * @button_0d_enabled: flag for 0d button support
@@ -247,42 +181,31 @@ struct synaptics_hover {
  * @irq_enabled: flag for indicating interrupt enable status
  * @touch_stopped: flag to stop interrupt thread processing
  * @fingers_on_2d: flag to indicate presence of fingers in 2d area
+ * @flip_x: set to TRUE if desired to flip direction on x-axis
+ * @flip_y: set to TRUE if desired to flip direction on y-axis
  * @sensor_sleep: flag to indicate sleep state of sensor
  * @wait: wait queue for touch data polling in interrupt thread
  * @i2c_read: pointer to i2c read function
  * @i2c_write: pointer to i2c write function
  * @irq_enable: pointer to irq enable function
  */
-
 struct synaptics_rmi4_data {
 	struct i2c_client *i2c_client;
 	struct input_dev *input_dev;
 	const struct synaptics_rmi4_platform_data *board;
 	struct synaptics_rmi4_device_info rmi4_mod_info;
-	struct regulator *regulator;
-	struct mutex rmi4_reset_mutex;
+	struct regulator *vdd;
+	struct regulator *vcc_i2c;
 	struct mutex rmi4_io_ctrl_mutex;
-	struct mutex rmi4_reflash_mutex;
-	struct timer_list f51_finger_timer;
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	struct early_suspend early_suspend;
-#endif
-	unsigned char *firmware_image;
-
-	struct completion init_done;
-	struct synaptics_finger finger[MAX_NUMBER_OF_FINGERS];
-#if defined (CONFIG_TOUCHSCREEN_FACTORY_PLATFORM)
-	struct synaptics_hover hover;
-#endif
-
+	struct delayed_work det_work;
+	struct workqueue_struct *det_workqueue;
+	const char *fw_image_name;
 	unsigned char current_page;
 	unsigned char button_0d_enabled;
 	unsigned char full_pm_cycle;
 	unsigned char num_of_rx;
 	unsigned char num_of_tx;
-	unsigned char num_of_node;
 	unsigned char num_of_fingers;
-	unsigned char max_touch_width;
 	unsigned char intr_mask[MAX_INTR_REGISTERS];
 	unsigned short num_of_intr_regs;
 	unsigned short f01_query_base_addr;
@@ -292,62 +215,31 @@ struct synaptics_rmi4_data {
 	int irq;
 	int sensor_max_x;
 	int sensor_max_y;
-	int touch_threshold;
-	int gloved_sensitivity;
-	int ta_status;
-	bool flash_prog_mode; /* prog_mod == TRUE ?  boot mode : normal mode */
 	bool irq_enabled;
 	bool touch_stopped;
 	bool fingers_on_2d;
-	bool f51_finger;
 	bool sensor_sleep;
-	bool stay_awake;
-	bool staying_awake;
-	bool fast_glove_state;
-
-	int ic_revision_of_ic;		/* revision of reading from IC */
-	int fw_version_of_ic;		/* firmware version of IC */
-	int ic_revision_of_bin;		/* revision of reading from binary */
-	int fw_version_of_bin;		/* firmware version of binary */
-	int fw_release_date_of_ic;	/* Config release data from IC */
-	int panel_revision;		/* Octa panel revision */
-	int factory_read_panel_wakeup;
-	bool doing_reflash;
-
-#ifdef CONFIG_GLOVE_TOUCH
-	int glove_touch_addr;
-	bool touchkey_glove_mode_status;
-	unsigned char glove_mode_feature;
-	unsigned char glove_mode_enables;
-	unsigned short glove_mode_enables_addr;
-#endif
-
-#ifdef TSP_BOOSTER
-	struct delayed_work	work_dvfs_off;
-	struct delayed_work	work_dvfs_chg;
-	struct mutex		dvfs_lock;
-	bool dvfs_lock_status;
-	int dvfs_old_stauts;
-	int dvfs_boost_mode;
-	int dvfs_freq;
-#endif
-
-	struct delayed_work work_init_power_on;
-	struct delayed_work	work_rezero;
-
-	void (*register_cb)(struct synaptics_rmi_callbacks *);
-	struct synaptics_rmi_callbacks callbacks;
-
+	bool flip_x;
+	bool flip_y;
+	wait_queue_head_t wait;
 	int (*i2c_read)(struct synaptics_rmi4_data *pdata, unsigned short addr,
 			unsigned char *data, unsigned short length);
 	int (*i2c_write)(struct synaptics_rmi4_data *pdata, unsigned short addr,
 			unsigned char *data, unsigned short length);
 	int (*irq_enable)(struct synaptics_rmi4_data *rmi4_data, bool enable);
 	int (*reset_device)(struct synaptics_rmi4_data *rmi4_data);
+#ifdef CONFIG_FB
+	struct notifier_block fb_notif;
+#else
+#ifdef CONFIG_HAS_EARLYSUSPEND
+	struct early_suspend early_suspend;
+#endif
+#endif
 };
 
 enum exp_fn {
 	RMI_DEV = 0,
+	RMI_F34,
 	RMI_F54,
 	RMI_FW_UPDATER,
 	RMI_LAST,
@@ -361,28 +253,12 @@ struct synaptics_rmi4_exp_fn_ptr {
 	int (*enable)(struct synaptics_rmi4_data *rmi4_data, bool enable);
 };
 
-int synaptics_rmi4_new_function(enum exp_fn fn_type,
+void synaptics_rmi4_new_function(enum exp_fn fn_type, bool insert,
 		int (*func_init)(struct synaptics_rmi4_data *rmi4_data),
 		void (*func_remove)(struct synaptics_rmi4_data *rmi4_data),
 		void (*func_attn)(struct synaptics_rmi4_data *rmi4_data,
 				unsigned char intr_mask));
 
-int rmidev_module_register(void);
-int rmi4_f54_module_register(void);
-int synaptics_rmi4_f54_set_control(struct synaptics_rmi4_data *rmi4_data);
-
-int rmi4_fw_update_module_register(void);
-
-int synaptics_fw_updater(unsigned char *fw_data, bool mode, bool factory_fw);
-int synaptics_rmi4_glove_mode_enables(struct synaptics_rmi4_data *rmi4_data);
-
-int synaptics_rmi4_reset_device(struct synaptics_rmi4_data *rmi4_data);
-int synaptics_proximity_no_sleep_set(bool enables);
-void synaptics_rmi4_f51_set_custom_rezero(struct synaptics_rmi4_data *rmi4_data);
-
-extern int synaptics_rmi4_proximity_enables(unsigned char enables);
-
-extern struct class *sec_class;
 static inline ssize_t synaptics_rmi4_show_error(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -409,7 +285,5 @@ static inline void hstoba(unsigned char *dest, unsigned short src)
 	dest[0] = src % 0x100;
 	dest[1] = src / 0x100;
 }
-#ifdef CONFIG_FB_MSM_MIPI_SAMSUNG_OCTA_VIDEO_FULL_HD_PT_PANEL
-extern int touch_display_status;
-#endif
+
 #endif

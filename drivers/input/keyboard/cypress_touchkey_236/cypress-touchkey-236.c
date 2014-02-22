@@ -917,15 +917,14 @@ static ssize_t touchkey_firm_status_show(struct device *dev,
 {
 	struct cypress_touchkey_info *info = dev_get_drvdata(dev);
 	int count = 0;
-	char buff[16] = {0};
 	dev_info(&info->client->dev, "[TouchKey] touchkey_update_status: %d\n",
 						info->touchkey_update_status);
 	if (info->touchkey_update_status == 0)
-		count = snprintf(buff, sizeof(buff), "PASS\n");
+		count = snprintf(buf, 20, "PASS\n");
 	else if (info->touchkey_update_status == 1)
-		count = snprintf(buff, sizeof(buff), "Downloading\n");
+		count = snprintf(buf, 20, "Downloading\n");
 	else if (info->touchkey_update_status == -1)
-		count = snprintf(buff, sizeof(buff), "Fail\n");
+		count = snprintf(buf, 20, "Fail\n");
 	return count;
 }
 
@@ -934,16 +933,15 @@ static ssize_t touch_update_read(struct device *dev,
 {
 	struct cypress_touchkey_info *info = dev_get_drvdata(dev);
 	int count = 0;
-	char buff[16] = {0};
 
 	dev_info(&info->client->dev, "[TouchKey] touchkey_update_read: %d\n",
 						info->touchkey_update_status);
 	if (info->touchkey_update_status == 0)
-		count = snprintf(buff, sizeof(buff), "PASS\n");
+		count = snprintf(buf, 20, "PASS\n");
 	else if (info->touchkey_update_status == 1)
-		count = snprintf(buff, sizeof(buff), "Downloading\n");
+		count = snprintf(buf, 20, "Downloading\n");
 	else if (info->touchkey_update_status == -1)
-		count = snprintf(buff, sizeof(buff), "Fail\n");
+		count = snprintf(buf, 20, "Fail\n");
 	return count;
 }
 
